@@ -1,4 +1,4 @@
-"""Main application window with theme toggle and PDF features."""
+"""Main application window with theme toggle, sidebar toggle, and presentation mode."""
 
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
@@ -8,6 +8,7 @@ from ui.viewer import PDFViewer
 from ui.sidebar import Sidebar
 from ui.toolbar import Toolbar
 from ui.statusbar import StatusBar
+from ui.presentation import PresentationMode
 from core.pdf_operations import (
     PDFMerger, PDFSplitter, PDFRotator, PDFMetadata,
     PDFPageNumber, PDFTextExtractor,
@@ -31,6 +32,7 @@ class MainWindow:
         ctk.set_default_color_theme("blue")
 
         self.current_file: Path | None = None
+        self.sidebar_visible = True
 
         # Core modules
         self.merger = PDFMerger()
@@ -66,22 +68,24 @@ class MainWindow:
             "watermark": self.add_watermark,
             "compress": self.compress_file,
             "toggle_theme": self.toggle_theme,
+            "toggle_sidebar": self.toggle_sidebar,
+            "present": self.start_presentation,
         }
         self.toolbar = Toolbar(self.root, commands=commands)
         self.toolbar.grid(row=0, column=0, sticky="ew")
 
         # Main content area
-        content = ctk.CTkFrame(self.root, fg_color="transparent")
-        content.grid(row=1, column=0, sticky="nsew", padx=8, pady=(0, 8))
-        content.grid_columnconfigure(1, weight=1)
-        content.grid_rowconfigure(0, weight=1)
+        self.content = ctk.CTkFrame(self.root, fg_color="transparent")
+        self.content.grid(row=1, column=0, sticky="nsew", padx=8, pady=(0, 8))
+        self.content.grid_columnconfigure(1, weight=1)
+        self.content.grid_rowconfigure(0, weight=1)
 
         # Sidebar
-        self.sidebar = Sidebar(content, on_page_select=self._on_page_select)
+        self.sidebar = Sidebar(self.content, on_page_select=self._on_page_select)
         self.sidebar.grid(row=0, column=0, sticky="ns", padx=(0, 8))
 
         # PDF Viewer
-        self.viewer = PDFViewer(content, on_page_change=self._on_page_change)
+        self.viewer = PDFViewer(self.content, on_page_change=self._on_page_change)
         self.viewer.grid(row=0, column=1, sticky="nsew")
 
         # Status bar
@@ -98,13 +102,31 @@ class MainWindow:
         self.root.bind("<Control-0>", lambda e: self.viewer.zoom_reset())
         self.root.bind("<End>", lambda e: self.viewer.go_to_end())
         self.root.bind("<Home>", lambda e: self.viewer.go_to_start())
+        self.root.bind("<F5>", lambda e: self.start_presentation())
+        self.root.bind("<Control-b>", lambda e: self.toggle_sidebar())
 
-    # Theme
+    # Theme & Sidebar
     def toggle_theme(self):
         self.is_dark = not self.is_dark
         ctk.set_appearance_mode("dark" if self.is_dark else "light")
         self.toolbar.update_theme_button(self.is_dark)
         self.status_bar.set_status(f"Theme: {'Dark' if self.is_dark else 'Light'}")
+
+    def toggle_sidebar(self):
+        if self.sidebar_visible:
+            self.sidebar.grid_forget()
+            self.status_bar.set_status("Sidebar hidden")
+        else:
+            self.sidebar.grid(row=0, column=0, sticky="ns", padx=(0, 8))
+            self.status_bar.set_status("Sidebar shown")
+        self.sidebar_visible = not self.sidebar_visible
+
+    # Presentation
+    def start_presentation(self):
+        if not self.current_file:
+            messagebox.showinfo("Info", "Open a PDF first")
+            return
+        PresentationMode(self.root, str(self.current_file), self.viewer.current_page)
 
     # File operations
     def open_file(self, file_path: str | None = None):

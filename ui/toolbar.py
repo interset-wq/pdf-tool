@@ -1,11 +1,11 @@
-"""Toolbar with grouped actions and theme switch."""
+"""Toolbar with grouped actions, theme switch, and sidebar toggle."""
 
 import customtkinter as ctk
 from utils.fonts import FONT_SMALL, FONT_BUTTON
 
 
 class Toolbar(ctk.CTkFrame):
-    """Top toolbar with file, edit, convert, security actions and theme switch."""
+    """Top toolbar with file, edit, convert, security actions."""
 
     def __init__(self, master, commands: dict | None = None, **kwargs):
         super().__init__(master, height=56, **kwargs)
@@ -14,9 +14,20 @@ class Toolbar(ctk.CTkFrame):
         self._setup_ui()
 
     def _setup_ui(self):
+        # Sidebar toggle (leftmost)
+        self.sidebar_toggle = ctk.CTkButton(
+            self,
+            text="Panel",
+            width=50,
+            height=28,
+            font=FONT_BUTTON(),
+            command=self._cmd("toggle_sidebar"),
+        )
+        self.sidebar_toggle.grid(row=0, column=0, padx=(12, 4), pady=14, sticky="w")
+
         # File group
         file_frame = ctk.CTkFrame(self, fg_color="transparent")
-        file_frame.grid(row=0, column=0, padx=(12, 4), pady=10, sticky="w")
+        file_frame.grid(row=0, column=1, padx=4, pady=10, sticky="w")
 
         ctk.CTkLabel(file_frame, text="File", font=FONT_SMALL()).pack(anchor="w")
         btn_frame = ctk.CTkFrame(file_frame, fg_color="transparent")
@@ -27,7 +38,7 @@ class Toolbar(ctk.CTkFrame):
 
         # Edit group
         edit_frame = ctk.CTkFrame(self, fg_color="transparent")
-        edit_frame.grid(row=0, column=1, padx=4, pady=10, sticky="w")
+        edit_frame.grid(row=0, column=2, padx=4, pady=10, sticky="w")
 
         ctk.CTkLabel(edit_frame, text="Edit", font=FONT_SMALL()).pack(anchor="w")
         btn_frame = ctk.CTkFrame(edit_frame, fg_color="transparent")
@@ -40,7 +51,7 @@ class Toolbar(ctk.CTkFrame):
 
         # Convert group
         convert_frame = ctk.CTkFrame(self, fg_color="transparent")
-        convert_frame.grid(row=0, column=2, padx=4, pady=10, sticky="w")
+        convert_frame.grid(row=0, column=3, padx=4, pady=10, sticky="w")
 
         ctk.CTkLabel(convert_frame, text="Convert", font=FONT_SMALL()).pack(anchor="w")
         btn_frame = ctk.CTkFrame(convert_frame, fg_color="transparent")
@@ -49,9 +60,19 @@ class Toolbar(ctk.CTkFrame):
         self._create_button(btn_frame, "To PNG", "convert")
         self._create_button(btn_frame, "To Text", "extract_text")
 
+        # Present group
+        present_frame = ctk.CTkFrame(self, fg_color="transparent")
+        present_frame.grid(row=0, column=4, padx=4, pady=10, sticky="w")
+
+        ctk.CTkLabel(present_frame, text="View", font=FONT_SMALL()).pack(anchor="w")
+        btn_frame = ctk.CTkFrame(present_frame, fg_color="transparent")
+        btn_frame.pack(fill="x")
+
+        self._create_button(btn_frame, "Present", "present")
+
         # Security group
         sec_frame = ctk.CTkFrame(self, fg_color="transparent")
-        sec_frame.grid(row=0, column=3, padx=4, pady=10, sticky="w")
+        sec_frame.grid(row=0, column=5, padx=4, pady=10, sticky="w")
 
         ctk.CTkLabel(sec_frame, text="Security", font=FONT_SMALL()).pack(anchor="w")
         btn_frame = ctk.CTkFrame(sec_frame, fg_color="transparent")
@@ -63,7 +84,7 @@ class Toolbar(ctk.CTkFrame):
 
         # Theme switch (right side)
         theme_frame = ctk.CTkFrame(self, fg_color="transparent")
-        theme_frame.grid(row=0, column=4, padx=12, pady=10, sticky="e")
+        theme_frame.grid(row=0, column=6, padx=12, pady=10, sticky="e")
 
         self.theme_switch = ctk.CTkSwitch(
             theme_frame,
