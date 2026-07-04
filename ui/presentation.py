@@ -103,6 +103,7 @@ class PresentationMode(ctk.CTkToplevel):
         self.bind("<End>", lambda e: self.go_to_end())
         self.bind("<Motion>", self._show_controls)
         self.bind("<Key>", self._on_key)
+        self.bind("<Configure>", self._on_resize)
 
         # Auto-hide controls
         self._controls_visible = True
@@ -113,16 +114,30 @@ class PresentationMode(ctk.CTkToplevel):
         if not self.reader.is_open:
             return
 
-        screen_w = self.winfo_screenwidth()
-        screen_h = self.winfo_screenheight() - 80  # Leave room for controls
+        # Ensure window is fully rendered
+        self.update_idletasks()
+
+        # Use actual window size
+        win_w = self.winfo_width()
+        win_h = self.winfo_height()
+
+        # Fallback to screen size if window not ready
+        if win_w <= 1:
+            win_w = self.winfo_screenwidth()
+        if win_h <= 1:
+            win_h = self.winfo_screenheight()
 
         page = self.reader.get_page(self.current_page)
         page_w = page.rect.width
         page_h = page.rect.height
 
-        # Fit to screen
-        scale_w = screen_w / page_w
-        scale_h = screen_h / page_h
+        # Fit to screen with padding
+        padding = 40
+        avail_w = win_w - padding * 2
+        avail_h = win_h - padding * 2
+
+        scale_w = avail_w / page_w
+        scale_h = avail_h / page_h
         self.zoom = min(scale_w, scale_h)
 
         img_bytes = self.reader.render_page(self.current_page, self.zoom)
@@ -130,8 +145,9 @@ class PresentationMode(ctk.CTkToplevel):
         self._photo = ImageTk.PhotoImage(img)
 
         self.canvas.delete("all")
-        x = (screen_w - self._photo.width()) // 2
-        y = (screen_h - self._photo.height()) // 2
+        # Center the image
+        x = (win_w - self._photo.width()) // 2
+        y = (win_h - self._photo.height()) // 2
         self.canvas.create_image(x, y, anchor="nw", image=self._photo)
 
         self._update_ui()
@@ -169,8 +185,11 @@ class PresentationMode(ctk.CTkToplevel):
 
     def _on_key(self, event):
         if event.keysym.isdigit():
-            # Jump to percentage
             pass
+
+    def _on_resize(self, event):
+        if event.widget == self:
+            self._render_page()
 
     def _show_controls(self, event=None):
         if not self._controls_visible:
