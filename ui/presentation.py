@@ -80,7 +80,7 @@ class PresentationMode(ctk.CTkToplevel):
         # Exit button
         self.exit_btn = ctk.CTkButton(
             self.controls, text="Exit", width=60, command=self.exit_presentation,
-            fg_color="gray50", hover_color="gray70", **btn_style
+            fg_color="gray50", hover_color="gray70", height=36
         )
         self.exit_btn.pack(side="right", padx=10, pady=12)
 
