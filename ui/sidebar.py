@@ -86,6 +86,24 @@ class Sidebar(ctk.CTkFrame):
 
         threading.Thread(target=self._render_thread, daemon=True).start()
 
+    def get_optimal_width(self) -> int:
+        """Calculate optimal sidebar width based on PDF aspect ratio."""
+        if not self.pdf_doc or self.pdf_doc.page_count == 0:
+            return 180
+
+        page = self.pdf_doc.load_page(0)
+        rect = page.rect
+        aspect = rect.width / rect.height
+
+        # Landscape (slides): wider sidebar
+        # Portrait (documents): narrower sidebar
+        if aspect > 1.3:  # Landscape
+            return 220
+        elif aspect < 0.8:  # Tall portrait
+            return 150
+        else:  # Standard A4/Letter
+            return 180
+
     def _render_thread(self):
         if not self.pdf_doc:
             return

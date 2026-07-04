@@ -1,4 +1,4 @@
-"""Main application window with theme toggle, sidebar toggle, and presentation mode."""
+"""Main application window with resizable sidebar and all features."""
 
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
@@ -9,6 +9,7 @@ from ui.sidebar import Sidebar
 from ui.toolbar import Toolbar
 from ui.statusbar import StatusBar
 from ui.presentation import PresentationMode
+from ui.resizable_panel import ResizablePanel
 from core.pdf_operations import (
     PDFMerger, PDFSplitter, PDFRotator, PDFMetadata,
     PDFPageNumber, PDFTextExtractor,
@@ -74,19 +75,22 @@ class MainWindow:
         self.toolbar = Toolbar(self.root, commands=commands)
         self.toolbar.grid(row=0, column=0, sticky="ew")
 
-        # Main content area
-        self.content = ctk.CTkFrame(self.root, fg_color="transparent")
-        self.content.grid(row=1, column=0, sticky="nsew", padx=8, pady=(0, 8))
-        self.content.grid_columnconfigure(1, weight=1)
-        self.content.grid_rowconfigure(0, weight=1)
+        # Main content area with resizable panel
+        self.panel = ResizablePanel(
+            self.root, min_width=120, max_width=400, on_resize=self._on_panel_resize
+        )
+        self.panel.grid(row=1, column=0, sticky="nsew", padx=8, pady=(0, 8))
 
         # Sidebar
-        self.sidebar = Sidebar(self.content, on_page_select=self._on_page_select)
-        self.sidebar.grid(row=0, column=0, sticky="ns", padx=(0, 8))
+        self.sidebar = Sidebar(self.panel, on_page_select=self._on_page_select)
+        self.panel.set_left_widget(self.sidebar)
+
+        # Separator
+        self.panel.create_separator()
 
         # PDF Viewer
-        self.viewer = PDFViewer(self.content, on_page_change=self._on_page_change)
-        self.viewer.grid(row=0, column=1, sticky="nsew")
+        self.viewer = PDFViewer(self.panel, on_page_change=self._on_page_change)
+        self.panel.set_right_widget(self.viewer)
 
         # Status bar
         self.status_bar = StatusBar(self.root)
@@ -116,12 +120,17 @@ class MainWindow:
     def toggle_sidebar(self):
         if self.sidebar_visible:
             self.sidebar.grid_forget()
+            self.panel._separator.grid_forget()
             self.status_bar.set_status("Sidebar hidden")
         else:
-            self.sidebar.grid(row=0, column=0, sticky="ns", padx=(0, 8))
+            self.sidebar.grid(row=0, column=0, sticky="ns")
+            self.panel._separator.grid(row=0, column=1, sticky="ns")
             self.status_bar.set_status("Sidebar shown")
         self.sidebar_visible = not self.sidebar_visible
         self.toolbar.update_sidebar_button(self.sidebar_visible)
+
+    def _on_panel_resize(self, width):
+        pass
 
     # Presentation
     def start_presentation(self):
@@ -146,6 +155,11 @@ class MainWindow:
             self.viewer.open_pdf(path)
             self.current_file = Path(path)
             self.sidebar.set_document(self.viewer.reader.document)
+
+            # Auto-adjust sidebar width based on PDF
+            optimal_width = self.sidebar.get_optimal_width()
+            self.panel.set_width(optimal_width)
+
             self.sidebar.update_file_info(
                 self.current_file.name,
                 self.viewer.reader.page_count,
@@ -209,20 +223,17 @@ class MainWindow:
         if not self.current_file:
             messagebox.showinfo("Info", "Open a PDF first")
             return
-
         dialog = ctk.CTkInputDialog(
             text="Enter angle (90, 180, 270) or negative for counter-clockwise:", title="Rotate"
         )
         angle_str = dialog.get_input()
         if not angle_str:
             return
-
         try:
             angle = int(angle_str)
         except ValueError:
             messagebox.showerror("Error", "Invalid angle")
             return
-
         output = filedialog.asksaveasfilename(
             title="Save rotated PDF", defaultextension=".pdf",
             filetypes=[("PDF files", "*.pdf")],
@@ -230,7 +241,6 @@ class MainWindow:
         )
         if not output:
             return
-
         try:
             self.rotator.rotate_all(self.current_file, angle, output)
             self.status_bar.set_status(f"Rotated {angle} degrees")
@@ -243,20 +253,17 @@ class MainWindow:
         if not self.current_file:
             messagebox.showinfo("Info", "Open a PDF first")
             return
-
         dialog = ctk.CTkInputDialog(
             text="Enter new page order (e.g., 3,1,2,4):", title="Reorder Pages"
         )
         order_str = dialog.get_input()
         if not order_str:
             return
-
         try:
             order = [int(x.strip()) - 1 for x in order_str.split(",")]
         except ValueError:
             messagebox.showerror("Error", "Invalid order format")
             return
-
         output = filedialog.asksaveasfilename(
             title="Save reordered PDF", defaultextension=".pdf",
             filetypes=[("PDF files", "*.pdf")],
@@ -264,7 +271,6 @@ class MainWindow:
         )
         if not output:
             return
-
         try:
             self.splitter.reorder_pages(self.current_file, order, output)
             self.status_bar.set_status("Pages reordered")
