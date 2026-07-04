@@ -25,10 +25,18 @@ class PresentationMode(ctk.CTkToplevel):
 
     def _setup_window(self):
         self.title("Presentation Mode")
-        self.attributes("-fullscreen", True)
+        self.overrideredirect(True)  # Remove title bar
         self.configure(bg="black")
+
+        # Get screen size
+        screen_w = self.winfo_screenwidth()
+        screen_h = self.winfo_screenheight()
+
+        # Cover entire screen
+        self.geometry(f"{screen_w}x{screen_h}+0+0")
         self.lift()
         self.focus_force()
+        self.attributes("-topmost", True)
 
     def _setup_ui(self):
         self.grid_columnconfigure(0, weight=1)
