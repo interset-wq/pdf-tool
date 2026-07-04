@@ -1,9 +1,23 @@
 [project]
 name = "pdf-tool"
 version = "0.1.0"
-description = "Add your description here"
+description = "A comprehensive PDF tool with CustomTkinter UI for viewing, merging, splitting, converting, encrypting and more."
 readme = "README.md"
+license = "MIT"
 requires-python = ">=3.14"
+authors = [
+    { name = "interset-wq" }
+]
+keywords = ["pdf", "viewer", "merge", "split", "convert", "encrypt"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Multimedia :: Graphics :: Graphics Conversion",
+    "Topic :: Office/Business",
+]
 dependencies = [
     "customtkinter>=6.0.0",
     "pikepdf>=10.9.1",
@@ -12,7 +26,16 @@ dependencies = [
     "reportlab>=5.0.0",
 ]
 
-[dependency-groups]
+[project.urls]
+Homepage = "https://github.com/interset-wq/pdf-tool"
+Repository = "https://github.com/interset-wq/pdf-tool"
+Issues = "https://github.com/interset-wq/pdf-tool/issues"
+
+[project.optional-dependencies]
 dev = [
-    "pyinstaller>=6.21.0",
+    "pyinstaller>=6.0.0",
 ]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
