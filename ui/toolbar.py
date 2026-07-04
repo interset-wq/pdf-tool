@@ -1,114 +1,124 @@
-"""Toolbar with grouped actions, theme switch, and sidebar toggle."""
+"""Ribbon-style toolbar inspired by PowerPoint."""
 
 import customtkinter as ctk
 from utils.fonts import FONT_SMALL, FONT_BUTTON
 
 
+class RibbonSeparator(ctk.CTkFrame):
+    """Vertical separator line."""
+    def __init__(self, master, **kwargs):
+        super().__init__(master, width=1, fg_color=("gray70", "gray40"), **kwargs)
+        self.pack_propagate(False)
+
+
+class RibbonGroup(ctk.CTkFrame):
+    """A group of buttons with a label."""
+
+    def __init__(self, master, label: str, **kwargs):
+        super().__init__(master, fg_color="transparent", **kwargs)
+        self._setup_ui(label)
+
+    def _setup_ui(self, label: str):
+        self.content = ctk.CTkFrame(self, fg_color="transparent")
+        self.content.pack(fill="both", expand=True, padx=4)
+
+        self.label = ctk.CTkLabel(self.content, text=label, font=FONT_SMALL(9))
+        self.label.pack(side="bottom", pady=(2, 0))
+
+    def add_button(self, text: str, command, width: int = 60, **kwargs) -> ctk.CTkButton:
+        btn = ctk.CTkButton(
+            self.content,
+            text=text,
+            width=width,
+            height=30,
+            font=FONT_BUTTON(10),
+            corner_radius=4,
+            command=command,
+            **kwargs,
+        )
+        btn.pack(side="left", padx=2, pady=(4, 16))
+        return btn
+
+
 class Toolbar(ctk.CTkFrame):
-    """Top toolbar with file, edit, convert, security actions."""
+    """Ribbon-style toolbar."""
 
     def __init__(self, master, commands: dict | None = None, **kwargs):
-        super().__init__(master, height=56, **kwargs)
+        super().__init__(master, height=80, **kwargs)
         self.commands = commands or {}
         self.pack_propagate(False)
         self._setup_ui()
 
     def _setup_ui(self):
-        # Sidebar toggle (leftmost)
-        self.sidebar_toggle = ctk.CTkButton(
-            self,
+        ribbon = ctk.CTkFrame(self, fg_color="transparent")
+        ribbon.pack(fill="both", expand=True, padx=8, pady=4)
+
+        # Sidebar toggle
+        self.sidebar_btn = ctk.CTkButton(
+            ribbon,
             text="Panel",
-            width=50,
-            height=28,
-            font=FONT_BUTTON(),
+            width=45,
+            height=50,
+            font=FONT_SMALL(9),
+            corner_radius=4,
             command=self._cmd("toggle_sidebar"),
         )
-        self.sidebar_toggle.grid(row=0, column=0, padx=(12, 4), pady=14, sticky="w")
+        self.sidebar_btn.pack(side="left", padx=(0, 6))
 
-        # File group
-        file_frame = ctk.CTkFrame(self, fg_color="transparent")
-        file_frame.grid(row=0, column=1, padx=4, pady=10, sticky="w")
+        RibbonSeparator(ribbon, height=55).pack(side="left", padx=4, fill="y")
 
-        ctk.CTkLabel(file_frame, text="File", font=FONT_SMALL()).pack(anchor="w")
-        btn_frame = ctk.CTkFrame(file_frame, fg_color="transparent")
-        btn_frame.pack(fill="x")
+        # File
+        g = RibbonGroup(ribbon, "File")
+        g.pack(side="left", padx=4)
+        g.add_button("Open", self._cmd("open"), width=50)
+        g.add_button("Save", self._cmd("save"), width=50)
 
-        self._create_button(btn_frame, "Open", "open")
-        self._create_button(btn_frame, "Save", "save")
+        RibbonSeparator(ribbon, height=55).pack(side="left", padx=4, fill="y")
 
-        # Edit group
-        edit_frame = ctk.CTkFrame(self, fg_color="transparent")
-        edit_frame.grid(row=0, column=2, padx=4, pady=10, sticky="w")
+        # Edit
+        g = RibbonGroup(ribbon, "Edit")
+        g.pack(side="left", padx=4)
+        g.add_button("Merge", self._cmd("merge"), width=55)
+        g.add_button("Split", self._cmd("split"), width=55)
+        g.add_button("Rotate", self._cmd("rotate"), width=55)
+        g.add_button("Reorder", self._cmd("reorder"), width=55)
 
-        ctk.CTkLabel(edit_frame, text="Edit", font=FONT_SMALL()).pack(anchor="w")
-        btn_frame = ctk.CTkFrame(edit_frame, fg_color="transparent")
-        btn_frame.pack(fill="x")
+        RibbonSeparator(ribbon, height=55).pack(side="left", padx=4, fill="y")
 
-        self._create_button(btn_frame, "Merge", "merge")
-        self._create_button(btn_frame, "Split", "split")
-        self._create_button(btn_frame, "Rotate", "rotate")
-        self._create_button(btn_frame, "Reorder", "reorder")
+        # Convert
+        g = RibbonGroup(ribbon, "Convert")
+        g.pack(side="left", padx=4)
+        g.add_button("To PNG", self._cmd("convert"), width=55)
+        g.add_button("To Text", self._cmd("extract_text"), width=55)
 
-        # Convert group
-        convert_frame = ctk.CTkFrame(self, fg_color="transparent")
-        convert_frame.grid(row=0, column=3, padx=4, pady=10, sticky="w")
+        RibbonSeparator(ribbon, height=55).pack(side="left", padx=4, fill="y")
 
-        ctk.CTkLabel(convert_frame, text="Convert", font=FONT_SMALL()).pack(anchor="w")
-        btn_frame = ctk.CTkFrame(convert_frame, fg_color="transparent")
-        btn_frame.pack(fill="x")
+        # View
+        g = RibbonGroup(ribbon, "View")
+        g.pack(side="left", padx=4)
+        g.add_button("Present", self._cmd("present"), width=65,
+                      fg_color=("green", "#2d8a4e"))
 
-        self._create_button(btn_frame, "To PNG", "convert")
-        self._create_button(btn_frame, "To Text", "extract_text")
+        RibbonSeparator(ribbon, height=55).pack(side="left", padx=4, fill="y")
 
-        # Present group
-        present_frame = ctk.CTkFrame(self, fg_color="transparent")
-        present_frame.grid(row=0, column=4, padx=4, pady=10, sticky="w")
+        # Security
+        g = RibbonGroup(ribbon, "Security")
+        g.pack(side="left", padx=4)
+        g.add_button("Encrypt", self._cmd("encrypt"), width=55)
+        g.add_button("Watermark", self._cmd("watermark"), width=60)
+        g.add_button("Compress", self._cmd("compress"), width=60)
 
-        ctk.CTkLabel(present_frame, text="View", font=FONT_SMALL()).pack(anchor="w")
-        btn_frame = ctk.CTkFrame(present_frame, fg_color="transparent")
-        btn_frame.pack(fill="x")
-
-        self._create_button(btn_frame, "Present", "present")
-
-        # Security group
-        sec_frame = ctk.CTkFrame(self, fg_color="transparent")
-        sec_frame.grid(row=0, column=5, padx=4, pady=10, sticky="w")
-
-        ctk.CTkLabel(sec_frame, text="Security", font=FONT_SMALL()).pack(anchor="w")
-        btn_frame = ctk.CTkFrame(sec_frame, fg_color="transparent")
-        btn_frame.pack(fill="x")
-
-        self._create_button(btn_frame, "Encrypt", "encrypt")
-        self._create_button(btn_frame, "Watermark", "watermark")
-        self._create_button(btn_frame, "Compress", "compress")
-
-        # Theme switch (right side)
-        theme_frame = ctk.CTkFrame(self, fg_color="transparent")
-        theme_frame.grid(row=0, column=6, padx=12, pady=10, sticky="e")
-
+        # Theme
         self.theme_switch = ctk.CTkSwitch(
-            theme_frame,
+            ribbon,
             text="Dark",
-            font=FONT_SMALL(),
+            font=FONT_SMALL(9),
             command=self._cmd("toggle_theme"),
             onvalue=True,
             offvalue=False,
         )
-        self.theme_switch.pack(side="right")
+        self.theme_switch.pack(side="right", padx=8)
         self.theme_switch.select()
-
-    def _create_button(self, parent, text: str, key: str):
-        btn = ctk.CTkButton(
-            parent,
-            text=text,
-            width=70,
-            height=28,
-            font=FONT_BUTTON(),
-            corner_radius=6,
-            command=self._cmd(key),
-        )
-        btn.pack(side="left", padx=2)
-        return btn
 
     def update_theme_button(self, is_dark: bool) -> None:
         if is_dark:
