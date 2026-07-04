@@ -71,17 +71,16 @@ class Toolbar(ctk.CTkFrame):
         ribbon.pack(fill="both", expand=True, padx=6, pady=4)
 
         # Sidebar toggle (standalone)
-        self.sidebar_btn = ctk.CTkButton(
+        self.sidebar_switch = ctk.CTkSwitch(
             ribbon,
             text="Panel",
-            width=40,
-            height=56,
             font=FONT_SMALL(9),
-            corner_radius=6,
-            fg_color=("gray85", "gray25"),
             command=self._cmd("toggle_sidebar"),
+            onvalue=True,
+            offvalue=False,
         )
-        self.sidebar_btn.pack(side="left", padx=(0, 6))
+        self.sidebar_switch.pack(side="left", padx=(0, 6))
+        self.sidebar_switch.select()
 
         # File group
         g = RibbonGroup(ribbon, "File")
@@ -138,6 +137,12 @@ class Toolbar(ctk.CTkFrame):
         else:
             self.theme_switch.deselect()
             self.theme_switch.configure(text="Light")
+
+    def update_sidebar_button(self, visible: bool) -> None:
+        if visible:
+            self.sidebar_switch.select()
+        else:
+            self.sidebar_switch.deselect()
 
     def _cmd(self, key: str):
         def handler():

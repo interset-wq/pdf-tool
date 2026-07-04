@@ -121,6 +121,7 @@ class MainWindow:
             self.sidebar.grid(row=0, column=0, sticky="ns", padx=(0, 8))
             self.status_bar.set_status("Sidebar shown")
         self.sidebar_visible = not self.sidebar_visible
+        self.toolbar.update_sidebar_button(self.sidebar_visible)
 
     # Presentation
     def start_presentation(self):
