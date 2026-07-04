@@ -4,39 +4,56 @@ import customtkinter as ctk
 from utils.fonts import FONT_SMALL, FONT_BUTTON
 
 
-class RibbonSeparator(ctk.CTkFrame):
-    """Vertical separator line."""
-    def __init__(self, master, **kwargs):
-        super().__init__(master, width=1, fg_color=("gray70", "gray40"), **kwargs)
-        self.pack_propagate(False)
-
-
 class RibbonGroup(ctk.CTkFrame):
     """A group of buttons with a label."""
 
     def __init__(self, master, label: str, **kwargs):
         super().__init__(master, fg_color="transparent", **kwargs)
-        self._setup_ui(label)
+        self._label_text = label
+        self._setup_ui()
 
-    def _setup_ui(self, label: str):
-        self.content = ctk.CTkFrame(self, fg_color="transparent")
-        self.content.pack(fill="both", expand=True, padx=4)
+    def _setup_ui(self):
+        # Container with subtle background
+        self.container = ctk.CTkFrame(self, fg_color=("gray90", "gray20"), corner_radius=6)
+        self.container.pack(fill="both", expand=True, padx=2)
 
-        self.label = ctk.CTkLabel(self.content, text=label, font=FONT_SMALL(9))
-        self.label.pack(side="bottom", pady=(2, 0))
+        # Buttons area
+        self.content = ctk.CTkFrame(self.container, fg_color="transparent")
+        self.content.pack(fill="both", expand=True, padx=4, pady=(4, 0))
+
+        # Label at bottom
+        self.label = ctk.CTkLabel(
+            self.container, text=self._label_text, font=FONT_SMALL(9),
+            text_color=("gray50", "gray60")
+        )
+        self.label.pack(side="bottom", pady=(0, 4))
 
     def add_button(self, text: str, command, width: int = 60, **kwargs) -> ctk.CTkButton:
         btn = ctk.CTkButton(
             self.content,
             text=text,
             width=width,
-            height=30,
+            height=28,
             font=FONT_BUTTON(10),
             corner_radius=4,
             command=command,
             **kwargs,
         )
-        btn.pack(side="left", padx=2, pady=(4, 16))
+        btn.pack(side="left", padx=2, pady=2)
+        return btn
+
+    def add_icon_button(self, text: str, command, icon: str = "", width: int = 60) -> ctk.CTkButton:
+        display = f"{icon} {text}" if icon else text
+        btn = ctk.CTkButton(
+            self.content,
+            text=display,
+            width=width,
+            height=40,
+            font=FONT_BUTTON(10),
+            corner_radius=4,
+            command=command,
+        )
+        btn.pack(side="left", padx=2, pady=2)
         return btn
 
 
@@ -44,80 +61,74 @@ class Toolbar(ctk.CTkFrame):
     """Ribbon-style toolbar."""
 
     def __init__(self, master, commands: dict | None = None, **kwargs):
-        super().__init__(master, height=80, **kwargs)
+        super().__init__(master, height=76, **kwargs)
         self.commands = commands or {}
         self.pack_propagate(False)
         self._setup_ui()
 
     def _setup_ui(self):
         ribbon = ctk.CTkFrame(self, fg_color="transparent")
-        ribbon.pack(fill="both", expand=True, padx=8, pady=4)
+        ribbon.pack(fill="both", expand=True, padx=6, pady=4)
 
-        # Sidebar toggle
+        # Sidebar toggle (standalone)
         self.sidebar_btn = ctk.CTkButton(
             ribbon,
             text="Panel",
-            width=45,
-            height=50,
+            width=40,
+            height=56,
             font=FONT_SMALL(9),
-            corner_radius=4,
+            corner_radius=6,
+            fg_color=("gray85", "gray25"),
             command=self._cmd("toggle_sidebar"),
         )
         self.sidebar_btn.pack(side="left", padx=(0, 6))
 
-        RibbonSeparator(ribbon, height=55).pack(side="left", padx=4, fill="y")
-
-        # File
+        # File group
         g = RibbonGroup(ribbon, "File")
-        g.pack(side="left", padx=4)
+        g.pack(side="left", padx=3, fill="y")
         g.add_button("Open", self._cmd("open"), width=50)
         g.add_button("Save", self._cmd("save"), width=50)
 
-        RibbonSeparator(ribbon, height=55).pack(side="left", padx=4, fill="y")
-
-        # Edit
+        # Edit group
         g = RibbonGroup(ribbon, "Edit")
-        g.pack(side="left", padx=4)
-        g.add_button("Merge", self._cmd("merge"), width=55)
-        g.add_button("Split", self._cmd("split"), width=55)
-        g.add_button("Rotate", self._cmd("rotate"), width=55)
-        g.add_button("Reorder", self._cmd("reorder"), width=55)
+        g.pack(side="left", padx=3, fill="y")
+        g.add_button("Merge", self._cmd("merge"), width=50)
+        g.add_button("Split", self._cmd("split"), width=50)
+        g.add_button("Rotate", self._cmd("rotate"), width=50)
+        g.add_button("Reorder", self._cmd("reorder"), width=50)
 
-        RibbonSeparator(ribbon, height=55).pack(side="left", padx=4, fill="y")
-
-        # Convert
+        # Convert group
         g = RibbonGroup(ribbon, "Convert")
-        g.pack(side="left", padx=4)
-        g.add_button("To PNG", self._cmd("convert"), width=55)
-        g.add_button("To Text", self._cmd("extract_text"), width=55)
+        g.pack(side="left", padx=3, fill="y")
+        g.add_button("PNG", self._cmd("convert"), width=45)
+        g.add_button("Text", self._cmd("extract_text"), width=45)
 
-        RibbonSeparator(ribbon, height=55).pack(side="left", padx=4, fill="y")
-
-        # View
+        # View group
         g = RibbonGroup(ribbon, "View")
-        g.pack(side="left", padx=4)
-        g.add_button("Present", self._cmd("present"), width=65,
-                      fg_color=("green", "#2d8a4e"))
+        g.pack(side="left", padx=3, fill="y")
+        g.add_button("Present", self._cmd("present"), width=60,
+                      fg_color=("green", "#2d8a4e"), hover_color=("darkgreen", "#1e6b3a"))
 
-        RibbonSeparator(ribbon, height=55).pack(side="left", padx=4, fill="y")
-
-        # Security
+        # Security group
         g = RibbonGroup(ribbon, "Security")
-        g.pack(side="left", padx=4)
-        g.add_button("Encrypt", self._cmd("encrypt"), width=55)
+        g.pack(side="left", padx=3, fill="y")
+        g.add_button("Encrypt", self._cmd("encrypt"), width=50)
         g.add_button("Watermark", self._cmd("watermark"), width=60)
         g.add_button("Compress", self._cmd("compress"), width=60)
 
-        # Theme
+        # Theme (right side)
+        theme_frame = ctk.CTkFrame(ribbon, fg_color="transparent")
+        theme_frame.pack(side="right", padx=(8, 0))
+
         self.theme_switch = ctk.CTkSwitch(
-            ribbon,
+            theme_frame,
             text="Dark",
             font=FONT_SMALL(9),
             command=self._cmd("toggle_theme"),
             onvalue=True,
             offvalue=False,
         )
-        self.theme_switch.pack(side="right", padx=8)
+        self.theme_switch.pack(side="right")
         self.theme_switch.select()
 
     def update_theme_button(self, is_dark: bool) -> None:

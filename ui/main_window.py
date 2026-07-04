@@ -91,6 +91,7 @@ class MainWindow:
         # Status bar
         self.status_bar = StatusBar(self.root)
         self.status_bar.grid(row=2, column=0, sticky="ew")
+        self.status_bar.set_zoom_callback(self._on_status_zoom)
 
     def _setup_bindings(self):
         self.root.bind("<Control-o>", lambda e: self.open_file())
@@ -149,6 +150,7 @@ class MainWindow:
                 self.viewer.reader.page_count,
                 self._get_file_size(self.current_file),
             )
+            self.status_bar.update_page_info(1, self.viewer.reader.page_count)
             self.status_bar.set_status(f"Opened: {self.current_file.name}")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to open PDF:\n{e}")
@@ -385,6 +387,12 @@ class MainWindow:
 
     def _on_page_change(self, page_num: int):
         self.sidebar.highlight_page(page_num)
+        total = self.viewer.reader.page_count
+        self.status_bar.update_page_info(page_num + 1, total)
+
+    def _on_status_zoom(self, zoom: float):
+        self.viewer.zoom = zoom
+        self.viewer.render()
 
     def _get_file_size(self, path: Path) -> str:
         size = path.stat().st_size
